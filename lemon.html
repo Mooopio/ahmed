@@ -1,0 +1,55 @@
+DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>من عصير اللمون للهايبر</title>
+<style>
+body { font-family: Arial; background: #f0f8ff; text-align: center; margin: 0; padding: 10px; }
+#game { max-width: 400px; margin: auto; background: white; border-radius: 10px; padding: 10px; box-shadow: 0 0 10px #ccc; }
+button { padding: 10px; margin: 5px; border: none; border-radius: 5px; background: #4CAF50; color: white; font-size: 16px; }
+#stand { background: #d2b48c; padding: 20px; margin: 10px; border-radius: 5px; }
+.customer { background: #ffe4b5; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; }
+#computer { background: #333; color: white; padding: 10px; margin: 10px; border-radius: 5px; cursor: pointer; }
+.price { color: blue; text-decoration: underline; cursor: pointer; }
+.cashier { background: #90ee90; padding: 10px; margin: 10px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div id="game">
+<h2>🍋 من عصير اللمون للهايبر v3</h2>
+<div>الفلوس: <span id="money">100</span> جنيه</div>
+<div id="stand">ستاند الخشب - عصير اللمون <span class="price" onclick="changePrice()">السعر: <span id="price">5</span> جنيه</span></div>
+<div id="cashier" class="cashier" style="display:none;">🧑‍💼 الكاشير شغال</div>
+<div id="customers"></div>
+<div id="computer" onclick="openUpgrades()">💻 كمبيوتر التطوير</div>
+</div>
+<script>
+let money = 100;
+let price = 5;
+let hasCashier = false;
+function updateMoney(){ document.getElementById('money').innerText = money; }
+function changePrice(){ let newPrice = prompt("السعر الجديد:", price); if(newPrice) { price = parseInt(newPrice); document.getElementById('price').innerText = price; } }
+function openUpgrades(){ 
+  let choice = prompt("التطوير:\\n1. محل صغير - 20000 جنيه\\n2. كاشير - 5000 جنيه\\nاكتب رقم:"); 
+  if(choice=="2" && money>=5000){ money-=5000; hasCashier=true; document.getElementById('cashier').style.display='block'; alert("جبنا كاشير!"); }
+  updateMoney();
+}
+function addCustomer(){ 
+  let c = document.createElement('div'); 
+  c.className='customer'; 
+  c.innerText='زبون جديد - دوس عشان تاخد الطلب'; 
+  c.onclick=function(){ 
+    if(hasCashier){ money+=price; } else { money+=price; }
+    updateMoney(); 
+    this.innerText='الزبون خد العصير ومشي'; 
+    setTimeout(()=>{this.remove()},1000);
+  }; 
+  document.getElementById('customers').appendChild(c); 
+  setTimeout(()=>{ if(document.body.contains(c)) c.remove(); }, 7000); 
+}
+setInterval(addCustomer, 3000);
+updateMoney();
+</script>
+</body>
+</html>
