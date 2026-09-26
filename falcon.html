@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI-Powered Executive Operating System — CNC & Industrial Equipment</title>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f4f3f1; --panel:#ffffff; --ink:#1c1c1c; --sub:#5c5c58;
+  --line:#e3e1dc; --charcoal:#232323; --accent:#d9791f; --accent2:#b85f10;
+  --ok:#4a7c4e; --warn:#b8860b; --crit:#b3402f;
+  --radius:10px;
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161615; --bg2:#1d1d1c; --panel:#201f1e; --ink:#f2f1ee; --sub:#a8a49c;
+    --line:#38362f; --charcoal:#0f0f0e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161615; --bg2:#1d1d1c; --panel:#201f1e; --ink:#f2f1ee; --sub:#a8a49c;
+  --line:#38362f; --charcoal:#0f0f0e;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+h1,h2,h3,h4{font-family:Georgia,'Times New Roman',serif;font-weight:600;margin:0 0 .4em;letter-spacing:.2px;}
+a{color:inherit;}
+.layout{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+#sidebar{width:270px;flex:0 0 270px;background:var(--charcoal);color:#eee;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;padding:18px 0 40px;z-index:50;transition:transform .25s;}
+#sidebar .brand{padding:0 18px 14px;border-bottom:1px solid #3a3a38;margin-bottom:10px;}
+#sidebar .brand small{color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-size:10.5px;}
+#sidebar .brand div{font-family:Georgia,serif;font-size:15px;line-height:1.3;margin-top:4px;}
+#navSearch{width:calc(100% - 24px);margin:8px 12px 10px;padding:8px 10px;border-radius:8px;border:1px solid #444;background:#2a2a28;color:#eee;font-size:13px;}
+#nav{list-style:none;margin:0;padding:0;}
+#nav li a{display:block;padding:7px 18px;font-size:13px;color:#c9c7c1;text-decoration:none;border-left:3px solid transparent;cursor:pointer;}
+#nav li a:hover{background:#2c2c2a;color:#fff;}
+#nav li a.active{background:#2c2c2a;color:var(--accent);border-left-color:var(--accent);font-weight:600;}
+#nav li.hidden{display:none;}
+
+/* MAIN */
+#main{margin-left:270px;flex:1;min-width:0;}
+#topbar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 28px;display:flex;gap:12px;align-items:center;z-index:40;padding-top:calc(10px + env(safe-area-inset-top,0px));flex-wrap:wrap;}
+#topbar input[type=text]{flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--ink);font-size:13.5px;}
+.chip{font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;color:var(--sub);white-space:nowrap;}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+#counter{font-size:11.5px;color:var(--sub);white-space:nowrap;}
+#menuBtn{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--ink);}
+.content{padding:32px 40px 90px;max-width:1080px;}
+section.page{display:none;}
+section.page.active{display:block;animation:fade .25s;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+.eyebrow{color:var(--accent2);text-transform:uppercase;font-size:11px;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;}
+.lede{color:var(--sub);font-size:15px;line-height:1.6;max-width:760px;margin-bottom:22px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:18px 0;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+.req{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:9px;overflow:hidden;}
+.req summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;gap:10px;align-items:baseline;font-size:13.5px;}
+.req summary::-webkit-details-marker{display:none;}
+.req summary .id{font-family:ui-monospace,Consolas,monospace;color:#fff;background:var(--charcoal);padding:2px 7px;border-radius:5px;font-size:11px;flex:none;}
+.req summary .nm{font-weight:600;}
+.req .body{padding:0 14px 13px 14px;color:var(--sub);font-size:13.5px;line-height:1.55;border-top:1px dashed var(--line);margin-top:2px;padding-top:9px;}
+.req[open] summary{border-bottom:1px solid var(--line);}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:16px 0;}
+.flow .node{background:var(--charcoal);color:#fff;padding:9px 13px;border-radius:8px;font-size:12.5px;cursor:pointer;border:2px solid transparent;}
+.flow .node:hover,.flow .node.sel{border-color:var(--accent);}
+.flow .arrow{color:var(--sub);font-size:14px;}
+.flowdesc{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--sub);margin:6px 0 18px;display:none;}
+.flowdesc.show{display:block;}
+table.matrix{width:100%;border-collapse:collapse;font-size:12.5px;margin:14px 0;}
+table.matrix th,table.matrix td{border:1px solid var(--line);padding:7px 9px;text-align:center;}
+table.matrix th{background:var(--bg2);}
+table.matrix td:first-child,table.matrix th:first-child{text-align:left;font-weight:600;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block;}
+.role-select{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.role-select button{padding:7px 12px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-size:12.5px;cursor:pointer;}
+.role-select button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.role-panel{display:none;}
+.role-panel.active{display:block;}
+.tag-line{margin-top:10px;font-size:12px;color:var(--sub);}
+.tag-line b{color:var(--ink);}
+.rule{border-left:4px solid var(--accent);background:var(--bg2);padding:11px 14px;border-radius:6px;font-size:13.5px;margin:10px 0;}
+.ai-demo{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--bg2);}
+.ai-demo .q{display:inline-block;margin:3px 5px 3px 0;padding:7px 11px;border:1px solid var(--line);border-radius:20px;background:var(--panel);font-size:12.5px;cursor:pointer;}
+.ai-demo .ans{margin-top:12px;padding:12px;background:var(--panel);border-radius:8px;border:1px solid var(--line);font-size:13.5px;display:none;}
+.ai-demo .ans.show{display:block;}
+.badge{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:12px;background:var(--line);color:var(--sub);margin-right:5px;}
+.arch{white-space:pre;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.5;background:var(--charcoal);color:#eee;padding:18px;border-radius:10px;overflow-x:auto;}
+.arch span{cursor:pointer;text-decoration:underline dotted;}
+.arch span:hover{color:var(--accent);}
+#toTop{position:fixed;bottom:20px;right:20px;background:var(--charcoal);color:#fff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;display:none;z-index:60;font-size:16px;}
+.no-results{color:var(--sub);font-style:italic;padding:20px 0;}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);width:82%;max-width:300px;}
+  #sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.3);}
+  #main{margin-left:0;}
+  #menuBtn{display:inline-block;}
+  .content{padding:22px 16px 90px;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav id="sidebar">
+  <div class="brand"><small>Graduation Project</small><div>AI-Powered Executive Operating System<br>for CNC &amp; Industrial Equipment</div></div>
+  <input id="navSearch" type="text" placeholder="Filter sections…">
+  <ul id="nav"></ul>
+</nav>
+
+<div id="main">
+  <div id="topbar">
+    <button id="menuBtn" aria-label="Menu">☰</button>
+    <input id="globalSearch" type="text" placeholder="Search requirement IDs, names, keywords (e.g. FR-CNC, AI, NFR)…">
+    <span id="counter"></span>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+</div>
+<button id="toTop">↑</button>
+
+<script>
+/* ---------------- DATA LAYER ---------------- */
+// Each requirement: [ID, Name, Description]
+const R = {
+AUTH:[["FR-AUTH-001","User Registration","Authorized administrators create employee accounts (User ID, Employee ID, Name, Email, Phone, Department, Position, Role, Status, Creation Date)."],
+["FR-AUTH-002","Login","Registered users authenticate securely to access role-appropriate areas of the system."],
+["FR-AUTH-003","Logout","Users can end an active session at any time."],
+["FR-AUTH-004","Password Hashing","Passwords are never stored in plain text; secure hashing is mandatory."],
+["FR-AUTH-005","Password Reset","Users can securely reset a forgotten password."],
+["FR-AUTH-006","Account Activation / Deactivation","Administrators can activate or deactivate accounts."],
+["FR-AUTH-007","Session Management","The system manages active sessions and expires them appropriately."],
+["FR-AUTH-008","Unauthorized Access Prevention","The system actively prevents access attempts outside a user's granted permissions."]],
+RBAC:[["FR-RBAC-001","Role-Based Access Control","The system implements RBAC across all modules."],
+["FR-RBAC-002","Permission Types","Permissions support View, Create, Update, Delete, Approve, Reject, Assign, Execute, Export, Configure, Manage."],
+["FR-RBAC-003","Per-Module Configuration","Permissions are configurable independently for each module."],
+["FR-RBAC-004","Role-Scoped Visibility","Users only see information and actions permitted by their role."],
+["FR-RBAC-005","AI Permission Inheritance","The AI inherits the permissions of the requesting user and never bypasses authorization."],
+["FR-RBAC-006","Server-Side Enforcement","Authorization is enforced server-side, not only in the UI."],
+["FR-RBAC-007","Role Assignment","Administrators assign and change user roles."],
+["FR-RBAC-008","Permission Auditing","Changes to permissions are recorded for audit purposes."]],
+DATA:[["FR-DATA-001","Data-Source Registration","Authorized users register external and internal data sources."],
+["FR-DATA-002","Excel Import","The system supports importing company data from Excel."],
+["FR-DATA-003","CSV Import","The system supports importing company data from CSV."],
+["FR-DATA-004","External API Integration","The system integrates with ERP, CRM, accounting, inventory, HR and service systems via APIs where available."],
+["FR-DATA-005","Data Validation","Imported data is validated against expected structure and rules."],
+["FR-DATA-006","Missing-Value Detection","The system flags missing required values on import."],
+["FR-DATA-007","Duplicate Detection","The system detects duplicate records during import."],
+["FR-DATA-008","Data Cleaning","The system supports cleaning imported data before it enters the platform."],
+["FR-DATA-009","Data Transformation","Imported data is transformed into the internal company data model."],
+["FR-DATA-010","Scheduled Synchronization","Data sources can be synchronized on a schedule."],
+["FR-DATA-011","Import History","A history of prior imports is retained."],
+["FR-DATA-012","Import-Error Reporting","Import errors are reported to authorized users without corrupting existing data."]],
+PLATFORM:[["FR-PLAT-001","Centralized Operational Layer","A single operational data layer connects Customers, Leads, Quotations, Orders, Payments, Invoices, Machines, Shipments, Installations, Maintenance, Service Tickets, Employees, Tasks and Spare Parts."],
+["FR-PLAT-002","Analytical Data Warehouse","A separate analytical layer supports KPI calculation, reporting, AI analysis and ML models."],
+["FR-PLAT-003","Historical Preservation","Historical records are preserved rather than overwritten."],
+["FR-PLAT-004","Data Lineage","Where possible, the origin of information is preserved for management traceability."]],
+CUST:[["FR-CUST-001","Customer CRUD","Authorized users create, update, search and view customers."],
+["FR-CUST-002","Customer Fields","Customer ID, Name, Company, Phone, Email, Address, Industry, Contact Person, Status, Registration Date."],
+["FR-CUST-003","Complete Customer History","Profile shows Leads, Quotations, Orders, Payments, Machines, Installation, Training, Warranty, Maintenance, Service Tickets."],
+["FR-CUST-004","Machine Portfolio View","The customer profile displays the customer's owned machines."],
+["FR-CUST-005","Outstanding Obligations","The profile surfaces outstanding financial obligations and open service issues."]],
+SALES:[["FR-SALES-001","Lead Creation & Management","Sales employees create and manage leads."],
+["FR-SALES-002","Lead Status Pipeline","New → Contacted → Qualified → Quotation Sent → Negotiation → Won/Lost."],
+["FR-SALES-003","Lead Assignment","Leads can be assigned to sales employees."],
+["FR-SALES-004","Follow-Up Management","Follow-ups, deadlines, and missed-follow-up detection."],
+["FR-SALES-005","Quotation Creation","Quotation Number, Customer, Machine, Quantity, Price, Discount, Terms, Expiration, Sales Employee, Status."],
+["FR-SALES-006","Quotation Status","Draft, Sent, Negotiation, Accepted, Rejected, Expired."],
+["FR-SALES-007","Quotation → Order Conversion","Accepted quotations are convertible into orders."],
+["FR-SALES-008","Sales Pipeline & KPIs","Lead count, qualified leads, conversion rate, quotations, won/lost deals, revenue, targets, target achievement, average deal value."]],
+SM:[["FR-SM-001","Sales Manager Dashboard","Team revenue, targets, achievement, pipeline value, open leads/quotations, won/lost, conversion, follow-ups, overdue follow-ups."],
+["FR-SM-002","Team Visibility","View sales employees and monitor individual performance."],
+["FR-SM-003","Target Configuration","Configure monthly, quarterly, annual, individual, team or machine-category targets."],
+["FR-SM-004","Lead Assignment & Workload","Assign leads and monitor employee workload."],
+["FR-SM-005","Pipeline & Forecast Monitoring","Monitor the pipeline and view sales forecasts."],
+["FR-SM-006","Lost-Deal Analysis","Analyze lost deals for patterns."],
+["FR-SM-007","Expiring-Quotation Monitoring","Monitor quotations approaching expiration."],
+["FR-SM-008","Overdue Follow-Up Monitoring","Monitor and surface overdue follow-ups."],
+["FR-SM-009","Sales Task Creation","Create sales-related tasks."],
+["FR-SM-010","Configured Sales Alerts","Receive alerts configured for sales events."],
+["FR-SM-011","Sales AI Assistant","Answer natural-language questions about leads, quotations, pipeline and targets."]],
+CNC:[["FR-CNC-001","Machine Record CRUD","Machine ID, Type, Brand, Model, Serial Number, Customer, Purchase/Delivery/Installation Dates, Warranty Start/End, Status."],
+["FR-CNC-002","Machine Categories","CNC Router, Laser, Plasma, Edge Banding, extensible to future categories."],
+["FR-CNC-003","Machine Status Lifecycle","Available, Reserved, In Transit, Delivered, Installed, Operational, Under Maintenance, Under Repair, Out of Service."],
+["FR-CNC-004","Customer Linkage","Every installed machine is linked to its owning customer."],
+["FR-CNC-005","Lifecycle History","Complete lifecycle history is maintained per machine."],
+["FR-CNC-006","Machine Search","Search by Machine ID, serial number, customer, model or type."],
+["FR-CNC-007","End-to-End Lifecycle","Lead → Quotation → Order → Payment → Machine → Shipment → Delivery → Installation → Training → Warranty → Maintenance → Closed."]],
+INST:[["FR-INST-001","Installation Job Creation","Linked to Customer, Machine, Order, Technician, Date, Location."],
+["FR-INST-002","Installation Status","Pending, Scheduled, In Progress, Completed, Cancelled, Rescheduled."],
+["FR-INST-003","Completion Requirements","Completion Date, Technician, Notes, Issues, Customer Confirmation are all required."],
+["FR-INST-004","Completion Guard (BR-007)","An installation cannot be marked completed without the required completion information."]],
+MAINT:[["FR-MAINT-001","Service Ticket Creation","Ticket ID, Machine, Customer, Problem, Symptoms, Priority, Created Date, Technician, Status, Resolution, Closed Date."],
+["FR-MAINT-002","Ticket Priority","Low, Medium, High, Critical."],
+["FR-MAINT-003","Ticket Status","Open, Assigned, In Progress, Waiting, Resolved, Closed."],
+["FR-MAINT-004","Maintenance & Failure History","Machine maintenance history, failure history, repair history, technician history, spare-parts usage."],
+["FR-MAINT-005","Failure Record Fields","Failure type, machine, date, symptoms, root cause, repair, spare parts, technician."],
+["FR-MAINT-006","Closure Guard (BR-006)","A service ticket cannot be closed without a recorded resolution."]],
+TM:[["FR-TM-001","Maintenance Dashboard","Open tickets, critical tickets, machines under maintenance, failed machines, technician workload, SLA, spare parts used."],
+["FR-TM-002","Technician Assignment","Assign and reassign technicians to tickets."],
+["FR-TM-003","Workload Monitoring","Monitor technician workload across open jobs."],
+["FR-TM-004","Failure History Review","Review historical failure patterns per machine."],
+["FR-TM-005","Risk-Score Visibility","View machine-risk scores where ML predictions are available."]],
+PM:[["FR-PMAINT-001","Predictive Inputs","Machine age, usage, maintenance history, failure history, service tickets, model, repair history."],
+["FR-PMAINT-002","Failure-Risk Output","The system may generate a machine-failure risk prediction with supporting factors."],
+["FR-PMAINT-003","Preventive Recommendations","Preventive maintenance may be recommended per configured conditions."],
+["FR-PMAINT-004","Prediction Record","Each prediction stores its result, timestamp and model version."],
+["FR-PMAINT-005","BR-013 Guard","Predictions never automatically become management decisions."]],
+WARE:[["FR-WARE-001","Spare-Parts Catalog","Part ID, Name, Category, Compatible Machines, Supplier, Cost, Stock Quantity, Minimum Stock Level."],
+["FR-WARE-002","Stock Movements","Stock-in and stock-out operations."],
+["FR-WARE-003","Ticket-Linked Usage","Spare parts consumed in maintenance are linked to the relevant service ticket."],
+["FR-WARE-004","Low-Stock Detection","The system flags parts below minimum stock level."],
+["FR-WARE-005","Inventory Dashboard","Stock levels, low-stock items, movements, machine availability."],
+["FR-WARE-006","Demand Forecasting","Forecast future spare-parts demand from historical usage."],
+["FR-WARE-007","Replenishment Recommendation","Recommend restocking based on forecast and thresholds."]],
+LOG:[["FR-LOG-001","Supplier Management","Manage supplier records used across shipments."],
+["FR-LOG-002","Shipment Records","Shipment ID, Supplier, Machines, Parts, Origin, Destination, Expected/Actual Arrival, Status."],
+["FR-LOG-003","Shipment Status","Pending, In Transit, Delayed, Arrived, Delivered."],
+["FR-LOG-004","Delay Detection","The system detects shipment delays automatically."],
+["FR-LOG-005","Cross-Impact Linking (BR-008)","Shipment delays connect to delivery and installation risk, and may trigger an installation-risk condition."]],
+LOGM:[["FR-LOGM-001","Logistics Dashboard","Active shipments, delayed shipments, expected arrivals, delivered machines, supplier performance, installation dependencies."],
+["FR-LOGM-002","Supplier & Status Management","Manage suppliers and update shipment status."],
+["FR-LOGM-003","Delay Investigation","Investigate and communicate delays."],
+["FR-LOGM-004","Delivery-Delay Predictions","View AI-generated delivery-delay predictions."]],
+FIN:[["FR-FIN-001","Invoice Management","Create and track customer invoices."],
+["FR-FIN-002","Payment Management","Record and reconcile payments."],
+["FR-FIN-003","Expense Management","Track company expenses."],
+["FR-FIN-004","Revenue / Profit Calculation","Compute revenue, expenses and profit."],
+["FR-FIN-005","Overdue Invoice Detection","Flag invoices past due."],
+["FR-FIN-006","Receivables & Cash Flow","Track receivables and cash-flow position."],
+["FR-FIN-007","Financial Dashboard","Consolidated financial dashboards for Finance Manager."],
+["FR-FIN-008","Finance AI Analysis","Analyze revenue, expenses, payments, invoices, receivables, profit and cash flow; may surface unusual patterns."]],
+PR:[["FR-PR-001","Payment-Risk Inputs","Previous payments, payment delays, invoice history, customer history, order value."],
+["FR-PR-002","Payment-Delay Risk Output","The system may generate a payment-delay risk indicator."],
+["FR-PR-003","BR-013 / Non-Automatic Guard","Predictions never automatically reject customers or transactions; recommendations remain subject to company policy and management decision."]],
+EOM:[["FR-EOM-001","Executive Dashboard","Upcoming meetings, pending/overdue decisions, executive tasks, pending approvals, deadlines, escalations, documents."],
+["FR-EOM-002","Meeting Creation","Title, Date, Time, Participants, Location, Agenda, Priority, Related Department."],
+["FR-EOM-003","Scheduling-Conflict Warning","The system warns of overlapping meetings."],
+["FR-EOM-004","Notes & Decisions","Meeting notes and decisions are recorded."],
+["FR-EOM-005","Decision → Task Conversion","Decisions convert into tasks with Responsible Person, Department, Deadline, Priority, Status."],
+["FR-EOM-006","Decision Tracking Fields","Decision ID, Date, Decision, Department, Responsible, Deadline, Status, Related Meeting/Documents."],
+["FR-EOM-007","Overdue Decision Escalation","Overdue decisions are detected, responsible users notified, and escalation applied per configured rules."]],
+EA:[["FR-EA-001","CEO Workspace","Today's schedule, upcoming meetings, important tasks, approvals, follow-ups, documents, alerts."],
+["FR-EA-002","Calendar Management","Manage the CEO calendar."],
+["FR-EA-003","Meeting Preparation","Prepare meeting information and access authorized executive documents."],
+["FR-EA-004","Follow-Up & Deadline Monitoring","Create follow-ups and monitor deadlines."],
+["FR-EA-005","Daily Executive Summary","Prepare a daily executive summary for the CEO."]],
+ADMIN:[["FR-ADM-001","Administrative Dashboard","Employee requests, pending approvals, administrative tasks, attendance issues, leave requests, assets, documents, overdue actions."],
+["FR-ADM-002","Request Types","Leave, equipment, document, administrative support, and maintenance requests."],
+["FR-ADM-003","Request Fields","Request ID, Employee, Type, Description, Date, Priority, Status, Assigned Person, Decision, Completion Date."],
+["FR-ADM-004","Approval Workflow","Approve or reject requests according to permissions."],
+["FR-ADM-005","Asset & Document Tracking","Track authorized company assets and internal documents."],
+["FR-ADM-006","Notification of Outcome","Notify the responsible manager and inform the employee of the result."]],
+HR:[["FR-HR-001","Employee Profiles","Employee ID, Name, Department, Position, Manager, Join Date, Contact, Status."],
+["FR-HR-002","Attendance & Task Tracking","Manage attendance, tasks, and workload."],
+["FR-HR-003","Task Status","Pending, In Progress, Completed, Overdue, Cancelled."],
+["FR-HR-004","Performance Indicators","Task completion, missed deadlines, attendance, customer complaints, target achievement, policy compliance."],
+["FR-HR-005","Evidence-Backed Alerts","Performance alerts must include supporting evidence."],
+["FR-HR-006","Manager Review Requirement (BR-003/BR-004)","Managers review performance information before action; AI never automatically terminates or punishes employees."]],
+BON:[["FR-BON-001","Bonus Policy Configuration","Authorized managers configure bonus policies."],
+["FR-BON-002","Policy Criteria","Target achievement, revenue, KPIs, completion rate, other company-defined criteria."],
+["FR-BON-003","Calculation Pipeline","Collect data → calculate KPIs → apply policy → calculate eligibility → explain → submit for approval."],
+["FR-BON-004","BR-002 Guard","The AI never invents bonus rules; calculations follow configured company policy."]],
+AIEXEC:[["FR-AI-001","Natural-Language Interface","Authorized users query the AI Executive in plain language."],
+["FR-AI-002","Cross-Department Analysis","Combines and analyzes information across departments."],
+["FR-AI-003","Explained Findings","Explains findings using available evidence."],
+["FR-AI-004","Root-Cause & Impact Analysis","Identifies potential root causes and business impact."],
+["FR-AI-005","Recommendation Generation","Generates recommendations grounded in company data."]],
+AGENTS:[["FR-AGENT-001","Sales Agent","Analyzes leads, customers, quotations, orders, follow-ups, conversion, revenue, targets."],
+["FR-AGENT-002","Finance Agent","Analyzes revenue, expenses, payments, invoices, receivables, profit, cash flow."],
+["FR-AGENT-003","Logistics Agent","Analyzes suppliers, shipments, delivery, imports, machine availability, installation dependencies."],
+["FR-AGENT-004","Operations Agent","Analyzes installations, maintenance, service tickets, technicians, deadlines, open problems."],
+["FR-AGENT-005","HR Agent","Analyzes employee data, workload, tasks, attendance, configured KPIs."],
+["FR-AGENT-006","CNC / Maintenance Agent","Analyzes machine history, failures, maintenance, warranty, tickets, spare parts, usage, technician history."]],
+RCA:[["FR-RCA-001","Cross-Department Correlation","The AI Executive correlates related events across departments."],
+["FR-RCA-002","Evidence Classification","Every relationship distinguishes Observed Fact, Data-Derived Finding, Prediction, and Recommendation."],
+["FR-RCA-003","No False Certainty","Uncertain inferences are never presented as confirmed facts."]],
+DEC:[["FR-DEC-001","Decision Inputs","Company data, AI analysis, company rules, business policies, user permissions."],
+["FR-DEC-002","Recommendation Output","Generates a recommendation from the above inputs."],
+["FR-DEC-003","Approval Determination","Determines whether an action requires approval before execution."]],
+REC:[["FR-REC-001","Recommendation Structure","Problem, Supporting Evidence, Suggested Action, Expected Purpose, Responsible Person, Priority, Approval Requirement."],
+["FR-REC-002","No Automatic Execution","Recommendations do not automatically become actions unless authorization rules allow it."]],
+ACT:[["FR-ACT-001","Detection","The engine detects a condition requiring action."],
+["FR-ACT-002","Task Creation","A task is created from the detected condition."],
+["FR-ACT-003","Assignment","The task is assigned to a responsible person."],
+["FR-ACT-004","Deadline Setting","A deadline is attached to the task."],
+["FR-ACT-005","Notification","Responsible parties are notified."],
+["FR-ACT-006","Monitoring","Task progress is monitored."],
+["FR-ACT-007","Escalation","Overdue tasks are escalated per configured rules."],
+["FR-ACT-008","Verification & Closure","Completed tasks are verified and closed."],
+["FR-ACT-009","Action Logging (BR-011)","Every AI-generated action is logged and traceable."]],
+APP:[["FR-APP-001","Approval Levels","No Approval, Manager Approval, Department Manager Approval, Executive Approval."],
+["FR-APP-002","Approver Context","Approvers see the requested action, reason, supporting data, AI recommendation, and expected impact."],
+["FR-APP-003","Approval Decisions","Approve, Reject, or Request Changes."],
+["FR-APP-004","Execution Guard (BR-010)","Unauthorized actions are never executed."]],
+WF:[["FR-WF-001","Workflow Creation","Authorized users define workflows with sequential steps."],
+["FR-WF-002","Dependencies","Steps may depend on other steps."],
+["FR-WF-003","Deadlines","Each step can carry a deadline."],
+["FR-WF-004","Conditions","Steps may include conditional branches."],
+["FR-WF-005","Notifications","Workflow events trigger notifications."],
+["FR-WF-006","Escalation","Overdue steps escalate per configured rules."],
+["FR-WF-007","Monitoring","Workflow progress is monitored end-to-end."],
+["FR-WF-008","Completion Records","Completed workflows retain a completion record."],
+["FR-WF-009","CNC-Specific Workflows","The engine supports both standard and CNC-specific processes."]],
+TECH:[["FR-TECH-001","Technician Profile","Skills, Experience, Location, Availability, Machine Expertise, Current Workload."],
+["FR-TECH-002","Workload Visibility","Technician workload is visible for assignment decisions."],
+["FR-TECH-003","AI Recommendation Factors","Skill match, machine type, availability, location, workload, experience."],
+["FR-TECH-004","Final-Assignment Authority (BR-005)","Final assignment remains subject to configured permissions and management rules."]],
+RAG:[["FR-RAG-001","Document Upload","Authorized users upload manuals, guides, policies and training documents."],
+["FR-RAG-002","Processing & Indexing","Documents are processed, content extracted, and indexed for semantic search."],
+["FR-RAG-003","Grounded Retrieval","Responses are generated from retrieved, relevant sections with source references."],
+["FR-RAG-004","No-Match Honesty (BR-012)","If no appropriate source is found, the AI states this rather than fabricating an answer."],
+["FR-RAG-005","Document Versioning","Documents are versioned where required."]],
+CMA:[["FR-CMA-001","Technician Q&A","Technicians ask natural-language procedure questions."],
+["FR-CMA-002","Source-Grounded Answers","Answers are retrieved from authorized manuals with a source reference."],
+["FR-CMA-003","No Fabrication Guard","The AI does not fabricate unavailable procedures."]],
+ML:[["FR-ML-001","Sales Forecasting","Historical sales data trains a forecasting model."],
+["FR-ML-002","Payment-Risk Prediction","Customer payment history feeds a payment-delay risk model."],
+["FR-ML-003","Delivery-Delay Prediction","Shipment information feeds a delay-risk model."],
+["FR-ML-004","Anomaly Detection","Historical patterns are compared against current data to flag anomalies."],
+["FR-ML-005","Machine-Failure Risk","Machine history feeds a failure-risk model."],
+["FR-ML-006","Predictive Maintenance","Machine data drives maintenance recommendations."],
+["FR-ML-007","Spare-Parts Demand Forecasting","Historical usage feeds a demand-forecasting model."],
+["FR-ML-008","Train/Test Separation","Models maintain a strict training/testing data split."],
+["FR-ML-009","Model Versioning","Model versions are tracked across retraining cycles."],
+["FR-ML-010","No Unverified Accuracy Claims","The system never claims model accuracy without an actual evaluation."]],
+ANOM:[["FR-ANOM-001","Monitored Domains","Expenses, sales, inventory, machine failures, payments, operational delays."],
+["FR-ANOM-002","Explainable Flags","Where the model supports it, the system explains why a record was flagged."],
+["FR-ANOM-003","BR-014 Guard","An anomaly is an investigation alert, not automatic evidence of wrongdoing."]],
+DASH:[["FR-DASH-001","Executive Control Center","Revenue, profit, orders, expenses, sales, critical issues, open decisions, delayed shipments, maintenance issues, overdue payments, workload, machine status, AI recommendations."],
+["FR-DASH-002","Drill-Down","Authorized users can drill into supporting data."],
+["FR-DASH-003","Daily Executive Brief","A daily brief aggregates Sales, Finance, Operations, Logistics, CNC, HR, decisions and alerts."],
+["FR-DASH-004","Priority Engine","Issues are prioritized by business impact, urgency, financial/customer/operational impact into Critical/High/Medium/Low, per configurable rules."]],
+NOTIF:[["FR-NOTIF-001","Notification Triggers","New tasks, assignments, deadlines, overdue tasks, shipment delays, low stock, failure risk, tickets, overdue invoices, executive decisions, approval requests, AI alerts."],
+["FR-NOTIF-002","Recipient Authorization","Notifications are sent only to authorized recipients."],
+["FR-NOTIF-003","Notification History","A history of notifications is retained."]],
+AUDIT:[["FR-AUD-001","Audit Trail","Records Who, What, When, Why, Data Used, Approval, Result for important actions."],
+["FR-AUD-002","AI Action Logging","Logs AI Agent, requesting user, input data, recommendation, tool/action executed, approval status, execution result."],
+["FR-AUD-003","Full Traceability (BR-011)","Every AI-generated action is traceable end-to-end."]],
+SEC:[["FR-SEC-001","Authentication Requirement","Protected resources require authentication."],
+["FR-SEC-002","Server-Side Authorization","Authorization is enforced server-side."],
+["FR-SEC-003","Sensitive Data Protection","HR and financial information is access-restricted."],
+["FR-SEC-004","Password Hashing","Passwords are securely hashed."],
+["FR-SEC-005","API Protection","APIs are protected against unauthorized access."],
+["FR-SEC-006","Frontend/Backend Consistency","Permissions are applied consistently across frontend and backend."],
+["FR-SEC-007","AI Permission Parity","AI queries respect the same data-access permissions as the requesting user."]],
+};
+const NFR = {
+"Security":["NFR-SEC-001 Protect authentication and session data.","NFR-SEC-002 Enforce authorization server-side for every request.","NFR-SEC-003 Protect personal, HR and financial information.","NFR-SEC-004 Securely hash and never expose passwords.","NFR-SEC-005 Guard APIs against unauthorized access.","NFR-SEC-006 Apply permissions consistently across all layers."],
+"Privacy":["NFR-PRIV-001 Restrict HR data to authorized roles.","NFR-PRIV-002 Restrict financial data to authorized roles.","NFR-PRIV-003 AI queries respect the requesting user's data-access scope.","NFR-PRIV-004 Sensitive information is never exposed outside granted permissions."],
+"AI Safety":["NFR-AISAFE-001 AI never bypasses permissions.","NFR-AISAFE-002 AI never fabricates company data.","NFR-AISAFE-003 AI distinguishes known information from uncertainty.","NFR-AISAFE-004 High-impact decisions require human approval.","NFR-AISAFE-005 AI never automatically terminates employees.","NFR-AISAFE-006 AI never automatically imposes penalties outside a controlled workflow.","NFR-AISAFE-007 ML predictions never automatically become decisions."],
+"RAG":["NFR-RAG-001 Responses are grounded in indexed company documents.","NFR-RAG-002 Source references accompany retrieved answers.","NFR-RAG-003 The AI states when no relevant source exists.","NFR-RAG-004 Documents are versioned where required."],
+"Explainability":["NFR-EXP-001 Recommendations include supporting evidence.","NFR-EXP-002 The system distinguishes Data → Finding → Prediction → Recommendation → Action.","NFR-EXP-003 Anomaly flags explain the triggering factors where supported.","NFR-EXP-004 Predictions display supporting factors where available."],
+"Human Oversight":["NFR-HUMAN-001 High-impact actions require human approval.","NFR-HUMAN-002 Managers may reject or modify proposed actions.","NFR-HUMAN-003 Human decisions are recorded in the audit trail.","NFR-HUMAN-004 Management remains responsible for sensitive decisions."],
+"Performance":["NFR-PERF-001 Dashboards and standard APIs meet an agreed response target under expected load.","NFR-PERF-002 AI/ML operations may run asynchronously when longer-running.","NFR-PERF-003 The system remains responsive under normal business load.","NFR-PERF-004 Long-running imports do not block interactive use."],
+"Reliability":["NFR-REL-001 Integration failures are handled gracefully.","NFR-REL-002 Failed imports never corrupt existing data.","NFR-REL-003 Workflow failures are logged.","NFR-REL-004 AI failures never cause business-data loss."],
+"Availability":["NFR-AVL-001 The system is available during defined business hours.","NFR-AVL-002 Critical services are monitored.","NFR-AVL-003 Errors are logged for investigation."],
+"Scalability":["NFR-SCALE-001 Supports additional users.","NFR-SCALE-002 Supports additional departments.","NFR-SCALE-003 Supports additional machine categories.","NFR-SCALE-004 Supports additional AI agents.","NFR-SCALE-005 Supports additional data sources."],
+"Maintainability":["NFR-MAINT-001 Modular backend architecture.","NFR-MAINT-002 Modular AI agents.","NFR-MAINT-003 Independently maintainable ML models.","NFR-MAINT-004 Configurable workflows.","NFR-MAINT-005 Structured logging throughout."],
+"Extensibility":["NFR-EXT-001 New departments can be added.","NFR-EXT-002 New roles can be added.","NFR-EXT-003 New KPIs can be added.","NFR-EXT-004 New AI agents can be added.","NFR-EXT-005 New CNC machine categories can be added."],
+"Backup":["NFR-BACK-001 Critical company data is backed up.","NFR-BACK-002 Backup schedules are configurable.","NFR-BACK-003 Backups are monitored for success/failure."],
+"Recovery":["NFR-REC-001 The system supports database recovery.","NFR-REC-002 Recovery procedures are documented and maintained.","NFR-REC-003 Recovery is tested against defined procedures."]
+};
+const BR = [
+["BR-001","AI shall not invent company policies."],
+["BR-002","Bonus calculations follow configured company policy only."],
+["BR-003","Employee penalties require appropriate management review."],
+["BR-004","Employee termination is never performed automatically by AI."],
+["BR-005","Technician recommendations consider skill, availability, workload, machine type, location and experience."],
+["BR-006","Service tickets cannot be closed without a resolution."],
+["BR-007","Installations cannot be completed without required completion evidence."],
+["BR-008","Shipment delays affect related delivery and installation risk."],
+["BR-009","AI actions must obey user permissions."],
+["BR-010","High-impact actions require approval."],
+["BR-011","AI actions must be auditable."],
+["BR-012","RAG responses must be grounded in company documents where applicable."],
+["BR-013","ML predictions do not automatically become business decisions."],
+["BR-014","Anomalies are investigation alerts, not automatic accusations."]
+];
+const ROLES = [
+["CEO / Executive","Company Overview, Revenue, Profit, Sales, Finance, Logistics, Operations, CNC, HR, Critical Issues, AI Recommendations, Approvals","All departments (summary + drill-down)","View all summaries, approve executive-level actions","Executive","Company-wide KPIs, target achievement, risk exposure","Full AI Executive access"],
+["Executive Office Manager","Meetings, Decisions, Follow-ups, Deadlines, Executive Tasks, Documents, Escalations","Executive office data","Create/manage meetings & decisions, escalate","Department Manager","Decision closure rate, overdue follow-ups","Meeting intelligence, decision tracking"],
+["Executive Assistant","CEO Calendar, Meetings, Briefings, Follow-ups, Documents, Reminders","CEO-authorized documents/calendar","Manage calendar, prepare briefs, create follow-ups","None (assistive)","Brief accuracy, deadline tracking","Meeting preparation AI"],
+["Sales Manager","Team Sales, Leads, Pipeline, Quotations, Revenue, Targets, Forecast","Team's sales data","Assign leads, configure targets, create tasks","Manager","Conversion rate, target achievement, pipeline value","Sales AI Assistant"],
+["Sales Employee","My Leads, My Quotations, My Targets","Own records","Create leads/quotations, follow up","None","Personal conversion & follow-up rate","Follow-up alerts"],
+["Finance Manager","Revenue, Expenses, Profit, Invoices, Payments, Receivables, Cash Flow","Financial data","Manage invoices/payments, flag overdue accounts","Manager","Cash flow, overdue receivables","Finance Agent analysis"],
+["Administrative Manager","Requests, Attendance Issues, Administrative Tasks, Documents, Assets","Administrative data","Approve/reject requests, assign tasks","Manager","Request turnaround time","None (workflow only)"],
+["HR Manager","Employees, Attendance, Tasks, KPIs, Performance","Employee profiles (restricted)","Review performance evidence, manage profiles","Manager (review only)","Attendance, completion, compliance","HR Agent (evidence, not decisions)"],
+["Logistics Manager","Shipments, Suppliers, Delays, Deliveries, Machine Availability","Logistics data","Update shipment status, manage suppliers","Manager","On-time delivery rate, delay frequency","Logistics Agent, delay predictions"],
+["Warehouse Manager","Machines, Spare Parts, Stock, Low Stock, Movements","Inventory data","Stock in/out, configure minimum levels","Manager","Stock-out incidents, forecast accuracy","Demand forecasting"],
+["Operations Manager","Installations, Service Tickets, Technicians, Deadlines","Operational data","Assign jobs, monitor SLA","Manager","On-time installation rate, open tickets","Operations Agent"],
+["Technical / Maintenance Manager","Machines, Maintenance, Failures, Tickets, Technicians, Spare Parts","Maintenance data","Assign/reassign technicians","Manager","MTTR, SLA compliance","CNC Agent, risk scores"],
+["Technician","Assigned Jobs, Machine Info, Customer Info, Maintenance Instructions, Spare Parts","Own assigned jobs","Update job/ticket status","None","Job completion rate","CNC Manual Assistant"],
+["System Administrator","Users, Roles, Permissions, Data Sources, System Health","System configuration","Create/manage accounts and permissions","System-level","Uptime, integration health","None (admin only)"],
+["AI System / Service Account","Cross-module (scoped by delegated user)","Delegated to requesting user's permissions","Execute authorized, non-sensitive routine actions","Inherits requester's authority — never elevated","N/A","Is the AI layer itself"]
+];
+const AGENTS = [
+["Sales Agent","Leads, Customers, Quotations, Orders, Follow-ups, Conversion, Revenue, Targets","Follow-up alerts, quotation-expiry risk, pipeline analysis, sales summaries, recommended tasks"],
+["Finance Agent","Revenue, Expenses, Payments, Invoices, Receivables, Profit, Cash Flow","Overdue-invoice alerts, revenue-change explanations, unusual-pattern flags, cash-flow notes"],
+["Logistics Agent","Suppliers, Shipments, Delivery, Imports, Machine Availability, Installation Dependencies","Delay predictions, supplier performance notes, installation-risk flags"],
+["Operations Agent","Installations, Maintenance, Tickets, Technicians, Deadlines, Problems","SLA risk flags, technician recommendations, overdue-installation alerts"],
+["HR Agent","Employees, Workload, Tasks, Attendance, KPIs","Performance evidence summaries (never automated penalties)"],
+["CNC / Maintenance Agent","Machine History, Failure History, Maintenance, Warranty, Tickets, Spare Parts, Usage, Technician History","Machine risk, maintenance recommendation, failure analysis, spare-part & technician recommendation, warranty info"]
+];
+const ML_CARDS = [
+["Sales Forecasting","Historical sales → future sales forecast."],
+["Payment-Delay Risk","Customer payment history → delay-risk score."],
+["Delivery-Delay Prediction","Shipment information → delay risk."],
+["Anomaly Detection","Historical vs. current patterns → unusual-pattern flags."],
+["Machine-Failure Risk","Machine history → failure risk."],
+["Predictive Maintenance","Machine data → maintenance recommendation."],
+["Spare-Parts Demand Forecasting","Historical usage → future demand."]
+];
+const AI_QA = [
+["What are the most important problems today?","Draws from the Priority Engine across Sales, Finance, Operations, Logistics and CNC to surface Critical/High items with supporting evidence — each tagged as Observed Fact, Finding, or Prediction."],
+["Why did profit decrease?","The Finance Agent correlates revenue, expenses and payment timing to propose a data-derived explanation, citing the specific records involved."],
+["Which quotations need follow-up?","The Sales Agent lists quotations approaching expiration or without recent activity, each linked to its owning sales employee."],
+["Which machines require maintenance?","The CNC Agent combines failure history and (where available) ML risk scores to rank machines needing attention."],
+["Which shipments are delayed?","The Logistics Agent lists delayed shipments and flags any linked installation-risk conditions per BR-008."],
+["What decisions are overdue?","The Executive Office module surfaces decisions past their deadline along with the responsible person and department."]
+];
+const CNC_FLOW = ["Lead","Quotation","Order","Payment","Machine","Shipment","Delivery","Installation","Training","Warranty","Maintenance","Closed"];
+const CNC_FLOW_DESC = {
+Lead:"Sales Agent captures customer interest and interest details; owned by Sales.",
+Quotation:"A priced offer is prepared with terms and expiration; owned by Sales.",
+Order:"An accepted quotation converts to a firm order; owned by Sales/Finance.",
+Payment:"Finance records and tracks payment against the order.",
+Machine:"A specific machine record is allocated/reserved for the order.",
+Shipment:"Logistics tracks the machine's transit from supplier/warehouse to destination.",
+Delivery:"The machine physically arrives; logistics confirms arrival status.",
+Installation:"Operations schedules a technician; cannot be marked complete without full completion evidence (BR-007).",
+Training:"Customer training on the installed machine is scheduled and recorded.",
+Warranty:"Warranty start/end dates are tracked against the machine record.",
+Maintenance:"Ongoing service tickets and preventive maintenance are tracked for the machine's lifetime.",
+Closed:"The order/lifecycle record is closed once all stages are confirmed complete."
+};
+const OPS_FLOW = ["Company Data","Data Integration","Validation","Data Warehouse","AI / ML Analysis","Problem Detection","Data Correlation","Root Cause Analysis","Business Impact","Recommendation","Decision Engine","Approval Check","Authorized Execution","Action Engine","Task","Assignment","Deadline","Notification","Monitoring","Escalation","Verification","Closure","Audit Log"];
+const OPS_FLOW_DESC = {
+"Company Data":"Raw information from ERP, CRM, Excel/CSV and internal systems.",
+"Data Integration":"Sources are registered and imported into the platform.",
+"Validation":"Missing values and duplicates are detected before data enters the platform.",
+"Data Warehouse":"Cleaned, transformed data lands in the analytical layer.",
+"AI / ML Analysis":"Agents and models analyze the current state of the business.",
+"Problem Detection":"Deviations, risks or issues are identified.",
+"Data Correlation":"Related signals across departments are linked together.",
+"Root Cause Analysis":"The AI Executive proposes a potential underlying cause, clearly labeled by evidence type.",
+"Business Impact":"Potential financial, customer or operational impact is estimated.",
+"Recommendation":"A structured recommendation is generated (problem, evidence, action, priority).",
+"Decision Engine":"Company rules, policies and permissions are checked against the recommendation.",
+"Approval Check":"The engine determines whether human approval is required.",
+"Authorized Execution":"If no approval is needed, execution proceeds within the requester's permissions.",
+"Action Engine":"Converts an authorized recommendation into a concrete task.",
+"Task":"A task record is created.",
+"Assignment":"The task is assigned to a responsible person.",
+"Deadline":"A deadline is attached.",
+"Notification":"Responsible parties are notified.",
+"Monitoring":"Progress is tracked until completion or escalation.",
+"Escalation":"Overdue items are escalated per configured rules.",
+"Verification":"Completion evidence is checked before closure.",
+"Closure":"The task/workflow is marked closed.",
+"Audit Log":"Who, what, when, why, data used, approval and result are recorded."
+};
+const SCENARIO_FLOW = ["Shipment Delay","Machine Availability Risk","Delivery Risk","Installation Risk","Customer Impact","Potential Payment Risk"];
+const SCEN_DESC = {
+"Shipment Delay":"Logistics detects the supplier shipment is running late (Observed Fact).",
+"Machine Availability Risk":"The delay may leave the ordered machine unavailable on schedule (Data-Derived Finding).",
+"Delivery Risk":"Delivery date is now at risk of slipping (Finding).",
+"Installation Risk":"The scheduled installation may need to move (Finding, per BR-008).",
+"Customer Impact":"The customer's expected timeline is affected (Predicted Impact).",
+"Potential Payment Risk":"A delayed installation could correlate with delayed final payment (Prediction — not a decision, per BR-013)."
+};
+const ARCH = `USERS
+   │
+   ▼
+WEB APPLICATION
+   │
+   ▼
+BACKEND
+   │
+   ▼
+AI EXECUTIVE + WORKFLOW ENGINE
+   │
+  ┌┴──────────────┬──────────────┐
+  ▼                ▼              ▼
+AI AGENTS     DECISION ENGINE   WORKFLOWS
+  │                │              │
+  └──────────────┬─┴──────────────┘
+                 ▼
+          RAG + ML LAYER
+                 ▼
+           COMPANY DATA
+                 ▲
+  ┌──────────────┼──────────────┐
+  ▼                ▼              ▼
+ ERP              CRM         EXCEL/CSV
+  ▼                ▼              ▼
+FINANCE         SERVICE     INVENTORY/HR
+
+  ↳ Action Engine · Approval Engine · Notification Engine · Audit Layer
+    sit alongside the AI Executive and are invoked by it under permission control.`;
+const MODULES = ["Authentication","User Management","Role & Permission Management","Executive Dashboard","Executive Office","Executive Assistant","Meeting Management","Decision Management","Task Management","Sales","Sales Manager","Finance","Administration","HR","Logistics","Warehouse","CNC Machines","Installation","Maintenance","Service Tickets","Technicians","Spare Parts","Workflow Engine","Notification Engine","Action Engine","Approval Engine","AI Executive","AI Agents","RAG Knowledge Base","ML Platform","Forecasting","Anomaly Detection","Executive Reporting","Audit Logs","System Administration"];
+
+/* ---------------- HELPERS ---------------- */
+function reqList(key){
+  return R[key].map(([id,name,desc])=>`<details class="req"><summary><span class="id">${id}</span><span class="nm">${name}</span></summary><div class="body">${desc}</div></details>`).join('');
+}
+function esc(s){return s;}
+
+/* ---------------- SECTION DEFINITIONS ---------------- */
+const SECTIONS = [
+{id:"overview",title:"System Overview",render:()=>`
+<div class="eyebrow">Graduation Project · System Definition</div>
+<h1>AI-Powered Executive Operating System for CNC &amp; Industrial Equipment Companies</h1>
+<p class="lede">A unified operating platform for companies that sell, import, install, maintain and support CNC and industrial equipment. It integrates Sales, Finance, HR, Administration, Logistics, Warehouse, Operations, CNC machine lifecycle, AI analysis, ML predictions, a RAG knowledge assistant, workflow automation, controlled AI actions, approvals, notifications and audit logging into one operating layer above company data — <b>it assists management, it does not replace it.</b></p>
+<div class="flow" id="coreflow"></div>
+<div class="flowdesc" id="coreflowdesc"></div>
+<div class="grid">
+  <div class="card"><b>15</b> user roles<div style="color:var(--sub);font-size:12.5px;margin-top:4px">Each with distinct dashboards &amp; permissions</div></div>
+  <div class="card"><b>35</b> system modules<div style="color:var(--sub);font-size:12.5px;margin-top:4px">Spanning every business department</div></div>
+  <div class="card"><b>6</b> specialized AI agents<div style="color:var(--sub);font-size:12.5px;margin-top:4px">Plus one AI Executive layer</div></div>
+  <div class="card"><b>7</b> ML use cases<div style="color:var(--sub);font-size:12.5px;margin-top:4px">Forecasting, risk &amp; anomaly detection</div></div>
+</div>
+<div class="rule"><b>Core principle:</b> AI assists management; management remains responsible for sensitive decisions.</div>`},
+
+{id:"roles",title:"User Roles",render:()=>`
+<div class="eyebrow">Section 3</div><h2>User Roles</h2>
+<p class="lede">Fifteen roles, each with a distinct dashboard, permission set, data visibility, available actions, approval authority, KPIs and AI capability.</p>
+<div class="role-select" id="roleSelect"></div>
+<div id="rolePanels"></div>`},
+
+{id:"auth",title:"Authentication",render:()=>`<div class="eyebrow">Section 4</div><h2>Authentication Requirements</h2><p class="lede">Registration, login/logout, secure password handling, reset, activation and session control.</p>${reqList('AUTH')}`},
+{id:"rbac",title:"RBAC",render:()=>`<div class="eyebrow">Section 4</div><h2>Role-Based Access Control</h2><p class="lede">Fine-grained, per-module permissions govern every user and every AI action.</p>
+<table class="matrix" id="matrixTable"></table>
+<div class="rule">AI actions inherit the permissions of the requesting user and never bypass authorization.</div>
+${reqList('RBAC')}`},
+{id:"data",title:"Data Integration",render:()=>`<div class="eyebrow">Section 5</div><h2>Company Data Integration</h2><p class="lede">Sources: Excel, CSV, ERP, CRM, Accounting, Inventory, HR, Service systems, internal databases and APIs.</p>
+<div class="flow" id="dataflow"></div><div class="flowdesc" id="dataflowdesc"></div>
+${reqList('DATA')}`},
+{id:"platform",title:"Data Platform",render:()=>`<div class="eyebrow">Section 6</div><h2>Company Data Platform</h2><p class="lede">A centralized operational layer feeds an analytical data warehouse used for KPIs, reporting, AI and ML.</p>
+<div class="grid">${["Customers","Leads","Quotations","Orders","Payments","Invoices","Machines","Shipments","Installations","Maintenance","Service Tickets","Employees","Tasks","Spare Parts"].map(e=>`<div class="card" style="text-align:center;font-size:13px">${e}</div>`).join('')}</div>
+${reqList('PLATFORM')}`},
+{id:"customer",title:"Customer",render:()=>`<div class="eyebrow">Section 7</div><h2>Customer Management</h2>${reqList('CUST')}`},
+{id:"sales",title:"Sales",render:()=>`<div class="eyebrow">Section 8</div><h2>Sales</h2>
+<div class="flow" id="leadflow"></div><div class="flowdesc" id="leadflowdesc"></div>
+${reqList('SALES')}`},
+{id:"salesmgr",title:"Sales Manager",render:()=>`<div class="eyebrow">Section 9</div><h2>Sales Manager</h2>
+<div class="ai-demo"><b style="font-size:13px">Sales AI Assistant — try a question:</b><br>${AI_QA.slice(0,4).map((q,i)=>`<span class="q" data-i="${i}" data-set="sm">${q[0]}</span>`).join('')}<div class="ans" id="smAns"></div></div>
+${reqList('SM')}`},
+{id:"cnc",title:"CNC Machines",render:()=>`<div class="eyebrow">Section 10</div><h2>CNC Machine Management</h2>
+<div class="grid">${["CNC Router","Laser","Plasma","Edge Banding"].map(t=>`<div class="card" style="text-align:center">${t}</div>`).join('')}</div>
+${reqList('CNC')}`},
+{id:"install",title:"Installation",render:()=>`<div class="eyebrow">Section 12</div><h2>Installation Management</h2><div class="rule">An installation cannot be marked completed without: Completion Date, Technician, Notes, Issues, Customer Confirmation.</div>${reqList('INST')}`},
+{id:"maint",title:"Maintenance",render:()=>`<div class="eyebrow">Section 13</div><h2>Maintenance &amp; Service Management</h2><div class="rule">A service ticket cannot be closed without a recorded resolution.</div>${reqList('MAINT')}`},
+{id:"techmgr",title:"Technical Manager",render:()=>`<div class="eyebrow">Section 14</div><h2>Technical / Maintenance Manager</h2>${reqList('TM')}`},
+{id:"predmaint",title:"Predictive Maintenance",render:()=>`<div class="eyebrow">Section 15</div><h2>Predictive Maintenance</h2>
+<div class="flow" id="pmflow"></div><div class="flowdesc" id="pmflowdesc"></div>
+${reqList('PM')}`},
+{id:"warehouse",title:"Warehouse",render:()=>`<div class="eyebrow">Section 16</div><h2>Warehouse &amp; Spare Parts</h2>${reqList('WARE')}`},
+{id:"logistics",title:"Logistics",render:()=>`<div class="eyebrow">Sections 17–18</div><h2>Logistics</h2>
+<div class="flow" id="logflow"></div><div class="flowdesc" id="logflowdesc"></div>
+${reqList('LOG')}${reqList('LOGM')}`},
+{id:"finance",title:"Finance",render:()=>`<div class="eyebrow">Section 19</div><h2>Finance</h2>${reqList('FIN')}`},
+{id:"payrisk",title:"Payment Risk",render:()=>`<div class="eyebrow">Section 20</div><h2>Payment Risk Prediction</h2><div class="rule">Predictions never automatically reject customers or transactions.</div>${reqList('PR')}`},
+{id:"eom",title:"Executive Office",render:()=>`<div class="eyebrow">Section 21</div><h2>Executive Office Manager</h2>
+<div class="flow" id="meetflow"></div>
+${reqList('EOM')}`},
+{id:"ea",title:"Executive Assistant",render:()=>`<div class="eyebrow">Section 22</div><h2>Executive Assistant</h2>${reqList('EA')}`},
+{id:"admin",title:"Administration",render:()=>`<div class="eyebrow">Section 25</div><h2>Administrative Manager</h2>
+<div class="flow" id="admflow"></div>
+${reqList('ADMIN')}`},
+{id:"hr",title:"HR",render:()=>`<div class="eyebrow">Section 26</div><h2>HR &amp; Workforce Management</h2>
+<div class="rule">AI detects and provides evidence → Manager reviews → Management decides. AI never terminates or punishes employees automatically.</div>
+${reqList('HR')}`},
+{id:"performance",title:"Performance",render:()=>`<div class="eyebrow">Section 26</div><h2>Performance Management</h2><p class="lede">Performance indicators: task completion, missed deadlines, attendance, customer complaints, target achievement, policy compliance — all evidence-backed and manager-reviewed before action.</p>${reqList('HR').split('').slice(0,0).join('')}<div class="grid">${["Task Completion","Missed Deadlines","Attendance","Customer Complaints","Target Achievement","Policy Compliance"].map(i=>`<div class="card" style="text-align:center;font-size:13px">${i}</div>`).join('')}</div>`},
+{id:"bonus",title:"Bonus",render:()=>`<div class="eyebrow">Section 27</div><h2>Bonus Management</h2>
+<div class="flow" id="bonflow"></div>
+<div class="rule">The AI shall never invent bonus rules.</div>
+${reqList('BON')}`},
+{id:"aiexec",title:"AI Executive",render:()=>`<div class="eyebrow">Section 28</div><h2>AI Executive</h2>
+<div class="ai-demo"><b style="font-size:13px">Ask the AI Executive:</b><br>${AI_QA.map((q,i)=>`<span class="q" data-i="${i}" data-set="exec">${q[0]}</span>`).join('')}<div class="ans" id="execAns"></div></div>
+${reqList('AIEXEC')}`},
+{id:"agents",title:"AI Agents",render:()=>`<div class="eyebrow">Section 29</div><h2>Specialized AI Agents</h2>
+<div class="grid">${AGENTS.map(a=>`<div class="card"><h4 style="margin-bottom:6px;font-size:14px">${a[0]}</h4><div style="font-size:12px;color:var(--sub)"><b>Inputs:</b> ${a[1]}</div><div style="font-size:12px;color:var(--sub);margin-top:6px"><b>Outputs:</b> ${a[2]}</div></div>`).join('')}</div>
+${reqList('AGENTS')}`},
+{id:"rca",title:"Root Cause Analysis",render:()=>`<div class="eyebrow">Section 30</div><h2>Cross-Department Root Cause Analysis</h2>
+<div class="flow" id="rcaflow"></div><div class="flowdesc" id="rcaflowdesc"></div>
+<div class="grid">
+<div class="card"><span class="badge">Type</span><b>Observed Fact</b><p style="font-size:12.5px;color:var(--sub)">Actual recorded information.</p></div>
+<div class="card"><span class="badge">Type</span><b>Data-Derived Finding</b><p style="font-size:12.5px;color:var(--sub)">A relationship discovered from data.</p></div>
+<div class="card"><span class="badge">Type</span><b>Prediction</b><p style="font-size:12.5px;color:var(--sub)">An ML-generated possibility.</p></div>
+<div class="card"><span class="badge">Type</span><b>Recommendation</b><p style="font-size:12.5px;color:var(--sub)">A suggested action.</p></div>
+</div>
+${reqList('RCA')}`},
+{id:"decision",title:"Decision Engine",render:()=>`<div class="eyebrow">Section 31</div><h2>Decision Engine</h2>${reqList('DEC')}`},
+{id:"recommend",title:"Recommendation Engine",render:()=>`<div class="eyebrow">Section 32</div><h2>Recommendation Engine</h2><div class="rule">Recommendation ≠ Automatic Action.</div>${reqList('REC')}`},
+{id:"action",title:"Action Engine",render:()=>`<div class="eyebrow">Section 33</div><h2>Action Engine</h2>
+<div class="flow" id="actflow"></div>
+${reqList('ACT')}`},
+{id:"approval",title:"Approval Engine",render:()=>`<div class="eyebrow">Section 34</div><h2>Approval Engine</h2>${reqList('APP')}`},
+{id:"workflow",title:"Workflow Engine",render:()=>`<div class="eyebrow">Section 35</div><h2>Workflow Engine</h2>${reqList('WF')}`},
+{id:"techmgmt",title:"Technician Management",render:()=>`<div class="eyebrow">Section 37</div><h2>Technician Management</h2>${reqList('TECH')}`},
+{id:"rag",title:"RAG",render:()=>`<div class="eyebrow">Section 38</div><h2>RAG Knowledge Base</h2>
+<div class="flow" id="ragflow"></div>
+<div class="rule">If relevant information cannot be found, the AI clearly states that no appropriate source was found.</div>
+${reqList('RAG')}`},
+{id:"cnc-manual",title:"CNC Manual Assistant",render:()=>`<div class="eyebrow">Section 39</div><h2>CNC Manual Assistant</h2>
+<div class="ai-demo"><span class="badge">Technician</span> "How do I perform this maintenance procedure?"<div class="ans show" style="margin-top:10px">The AI retrieves the relevant procedure from authorized machine manuals and maintenance documents, and cites the source. <b>It never fabricates unavailable procedures.</b></div></div>
+${reqList('CMA')}`},
+{id:"ml",title:"Machine Learning",render:()=>`<div class="eyebrow">Section 40</div><h2>Machine Learning</h2>
+<div class="grid">${ML_CARDS.map(m=>`<div class="card"><b>${m[0]}</b><p style="font-size:12.5px;color:var(--sub);margin-top:6px">${m[1]}</p></div>`).join('')}</div>
+<div class="flow" id="mlflow"></div>
+<div class="rule">The system never claims model accuracy without actual evaluation.</div>
+${reqList('ML')}`},
+{id:"anomaly",title:"Anomaly Detection",render:()=>`<div class="eyebrow">Section 41</div><h2>Anomaly Detection</h2><div class="rule">Anomaly = Investigation Alert. NOT Anomaly = Wrongdoing.</div>${reqList('ANOM')}`},
+{id:"execdash",title:"Executive Dashboard",render:()=>`<div class="eyebrow">Sections 42–44</div><h2>Executive Control Center &amp; Daily Brief</h2>${reqList('DASH')}`},
+{id:"notif",title:"Notifications",render:()=>`<div class="eyebrow">Section 45</div><h2>Notifications</h2>${reqList('NOTIF')}`},
+{id:"audit",title:"Audit",render:()=>`<div class="eyebrow">Section 46</div><h2>Audit Logging</h2>${reqList('AUDIT')}`},
+{id:"security",title:"Security & Governance",render:()=>`<div class="eyebrow">Sections 47–49</div><h2>Security, Privacy &amp; AI Governance</h2>
+<div class="grid">
+${["AI never bypasses permissions","AI never fabricates company data","Human approval required for sensitive decisions","AI never automatically terminates employees","AI never automatically imposes penalties","AI never invents company policies","ML predictions never become decisions automatically","Anomalies are never automatic evidence of misconduct"].map(r=>`<div class="card" style="font-size:12.5px">${r}</div>`).join('')}
+</div>
+${reqList('SEC')}`},
+{id:"nfr",title:"Non-Functional Requirements",render:()=>`<div class="eyebrow">Section 44</div><h2>Non-Functional Requirements</h2><p class="lede">Every category below is expandable and fully preserved from the source specification.</p>
+${Object.entries(NFR).map(([cat,items])=>`<details class="req"><summary><span class="id">${cat.toUpperCase()}</span><span class="nm">${cat}</span></summary><div class="body">${items.map(i=>`<div style="margin-bottom:5px">• ${i}</div>`).join('')}</div></details>`).join('')}`},
+{id:"rules",title:"Business Rules",render:()=>`<div class="eyebrow">Section 51</div><h2>Core Business Rules</h2>${BR.map(([id,text])=>`<details class="req"><summary><span class="id">${id}</span><span class="nm">${text}</span></summary><div class="body">Enforced across the relevant modules and AI agents wherever this condition applies.</div></details>`).join('')}`},
+{id:"e2e",title:"End-to-End Workflows",render:()=>`<div class="eyebrow">Sections 36, 52–53</div><h2>Complete CNC Workflow &amp; Full Operating Flow</h2>
+<h3 style="margin-top:0;font-size:15px">CNC Machine Lifecycle</h3>
+<div class="flow" id="e2ecnc"></div><div class="flowdesc" id="e2ecncdesc"></div>
+<h3 style="font-size:15px">Complete AI Operating Workflow</h3>
+<div class="flow" id="e2eops"></div><div class="flowdesc" id="e2eopsdesc"></div>
+<h3 style="font-size:15px">Example Scenario — Delayed Shipment Risk Chain</h3>
+<div class="flow" id="e2escen"></div><div class="flowdesc" id="e2escendesc"></div>
+<p style="font-size:13px;color:var(--sub)">If the required corrective action needs no approval, the Action Engine may execute it within permissions. If approval is required, it routes to the appropriate manager. Every step of this scenario is recorded in the audit trail.</p>`},
+{id:"architecture",title:"Architecture",render:()=>`<div class="eyebrow">Section 54</div><h2>System Architecture</h2>
+<div class="arch" id="archBox">${ARCH.split('\n').map(l=>{
+  let out=l;
+  ["USERS","WEB APPLICATION","BACKEND","AI EXECUTIVE + WORKFLOW ENGINE","AI AGENTS","DECISION ENGINE","WORKFLOWS","RAG + ML LAYER","COMPANY DATA","ERP","CRM","EXCEL/CSV","FINANCE","SERVICE","INVENTORY/HR"].forEach(k=>{
+    if(out.trim()===k){out=out.replace(k,`<span data-k="${k}">${k}</span>`);}
+  });
+  return out;
+}).join('\n')}</div>
+<div class="flowdesc" id="archdesc"></div>`},
+{id:"modules",title:"System Modules",render:()=>`<div class="eyebrow">Section 55</div><h2>Main System Modules</h2>
+<div class="grid">${MODULES.map((m,i)=>`<div class="card" style="font-size:13px"><span style="color:var(--accent);font-weight:700;margin-right:6px">${String(i+1).padStart(2,'0')}</span>${m}</div>`).join('')}</div>`},
+];
+
+/* ---------------- FLOW DEFINITIONS (id -> {steps, desc}) ---------------- */
+const FLOWS = {
+coreflow:{steps:["Data","Understand","Analyze","Detect","Predict","Decide","Act","Follow Up","Verify","Close"],
+ desc:{Data:"Company information enters from every department.",Understand:"The platform interprets what the data represents.",Analyze:"AI agents analyze patterns across departments.",Detect:"Problems, risks and opportunities are identified.",Predict:"ML models forecast selected risks.",Decide:"The Decision Engine checks rules, policy and permissions.",Act:"Authorized actions are executed via the Action Engine.",["Follow Up"]:"Tasks are monitored and escalated if overdue.",Verify:"Completion evidence is checked.",Close:"The item is closed and logged to the audit trail."}},
+dataflow:{steps:["Data Source","Import","Validation","Missing-Data Detection","Duplicate Detection","Cleaning","Transformation","Synchronization","Central Data Platform"],desc:{}},
+leadflow:{steps:["New","Contacted","Qualified","Quotation Sent","Negotiation","Won/Lost"],desc:{}},
+pmflow:{steps:["Machine Age + Usage + History","ML Model","Failure Risk","Supporting Factors","Maintenance Recommendation"],desc:{}},
+logflow:{steps:["Shipment Delay","Machine Unavailable","Delivery Risk","Installation Risk"],desc:{}},
+meetflow:{steps:["Meeting","Notes","Decision","Task","Responsible Person","Deadline","Follow-up","Escalation","Completion"],desc:{}},
+admflow:{steps:["Employee Request","Validation","Admin Manager Review","Approve/Reject","Task Creation","Execution","Verification","Close","Notify Employee"],desc:{}},
+bonflow:{steps:["Bonus Policy","Eligibility","Calculation","Explanation","Manager Approval"],desc:{}},
+rcaflow:{steps:["Shipment Delay","Machine Unavailable","Delivery Delay","Installation Delay","Customer Impact","Potential Payment Risk"],desc:{}},
+actflow:{steps:["Detection","Task","Assignment","Deadline","Notification","Monitoring","Escalation","Verification","Closure"],desc:{}},
+ragflow:{steps:["Document Upload","Processing","Content Extraction","Indexing","Semantic Search","Retrieval","Grounded Answer","Source Reference"],desc:{}},
+mlflow:{steps:["Training Data","Train/Test Split","Model Training","Evaluation","Model Version","Prediction","Timestamp","Stored Output"],desc:{}},
+e2ecnc:{steps:CNC_FLOW,desc:CNC_FLOW_DESC},
+e2eops:{steps:OPS_FLOW,desc:OPS_FLOW_DESC},
+e2escen:{steps:SCENARIO_FLOW,desc:SCEN_DESC},
+};
+function buildFlows(){
+  Object.entries(FLOWS).forEach(([id,cfg])=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML=cfg.steps.map((s,i)=>(i>0?'<span class="arrow">→</span>':'')+`<span class="node" data-flow="${id}" data-step="${s.replace(/"/g,'&quot;')}">${s}</span>`).join('');
+  });
+  document.addEventListener('click',e=>{
+    const n=e.target.closest('.node');
+    if(!n)return;
+    const flowId=n.dataset.flow, step=n.dataset.step;
+    document.querySelectorAll(`[data-flow="${flowId}"]`).forEach(x=>x.classList.remove('sel'));
+    n.classList.add('sel');
+    const descEl=document.getElementById(flowId+'desc');
+    if(descEl){
+      const d=(FLOWS[flowId].desc||{})[step];
+      descEl.textContent = d || `${step}: part of this workflow stage.`;
+      descEl.classList.add('show');
+    }
+  });
+}
+/* Architecture click descriptions */
+const ARCH_DESC = {
+"USERS":"CEO, managers, employees and technicians accessing the system per their role.",
+"WEB APPLICATION":"The role-aware frontend presenting dashboards and interactions.",
+"BACKEND":"Enforces authentication, authorization and business logic server-side.",
+"AI EXECUTIVE + WORKFLOW ENGINE":"The orchestration layer combining AI reasoning with process automation.",
+"AI AGENTS":"Six specialized agents analyzing their respective business domains.",
+"DECISION ENGINE":"Checks data, rules, policy and permissions before recommending or approving.",
+"WORKFLOWS":"Configurable multi-step business processes, standard or CNC-specific.",
+"RAG + ML LAYER":"Grounded document retrieval plus predictive/ML models.",
+"COMPANY DATA":"The centralized operational and analytical data platform.",
+"ERP":"External enterprise resource planning system integration.",
+"CRM":"External customer relationship management integration.",
+"EXCEL/CSV":"Manual or scheduled spreadsheet-based data import.",
+"FINANCE":"Financial records feeding and fed by the platform.",
+"SERVICE":"Service/ticketing systems integration.",
+"INVENTORY/HR":"Inventory and HR systems integration."
+};
+
+/* ---------------- NAV + RENDER ---------------- */
+const contentEl=document.getElementById('content');
+const navEl=document.getElementById('nav');
+SECTIONS.forEach(s=>{
+  const li=document.createElement('li');
+  li.innerHTML=`<a data-id="${s.id}">${s.title}</a>`;
+  navEl.appendChild(li);
+  const sec=document.createElement('section');
+  sec.className='page'; sec.id='page-'+s.id;
+  contentEl.appendChild(sec);
+});
+function showSection(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.remove('active'));
+  const page=document.getElementById('page-'+id);
+  const s=SECTIONS.find(x=>x.id===id);
+  if(!page||!s)return;
+  if(!page.dataset.built){ page.innerHTML=s.render(); page.dataset.built='1'; }
+  page.classList.add('active');
+  const link=document.querySelector(`#nav a[data-id="${id}"]`);
+  if(link)link.classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+  if(id==='overview')buildFlows();
+  if(id==='roles')buildRoles();
+  if(id==='rbac')buildMatrix();
+  if(['data','sales','salesmgr','predmaint','logistics','eom','admin','bonus','rca','action','rag','ml','e2e'].includes(id))buildFlows();
+  if(id==='architecture')buildArch();
+  if(['salesmgr','aiexec'].includes(id))buildAI();
+  if(window.innerWidth<=900){document.getElementById('sidebar').classList.remove('open');}
+}
+navEl.addEventListener('click',e=>{const a=e.target.closest('a');if(a)showSection(a.dataset.id);});
+
+/* Roles */
+function buildRoles(){
+  const sel=document.getElementById('roleSelect');
+  const panels=document.getElementById('rolePanels');
+  if(!sel||sel.dataset.built)return;
+  sel.dataset.built='1';
+  sel.innerHTML=ROLES.map((r,i)=>`<button data-i="${i}" class="${i===0?'active':''}">${r[0]}</button>`).join('');
+  panels.innerHTML=ROLES.map((r,i)=>`<div class="role-panel ${i===0?'active':''}" data-i="${i}">
+    <div class="grid">
+    <div class="card"><b>Dashboard</b><p style="font-size:12.5px;color:var(--sub)">${r[1]}</p></div>
+    <div class="card"><b>Data Visibility</b><p style="font-size:12.5px;color:var(--sub)">${r[2]}</p></div>
+    <div class="card"><b>Available Actions</b><p style="font-size:12.5px;color:var(--sub)">${r[3]}</p></div>
+    <div class="card"><b>Approval Authority</b><p style="font-size:12.5px;color:var(--sub)">${r[4]}</p></div>
+    <div class="card"><b>KPIs</b><p style="font-size:12.5px;color:var(--sub)">${r[5]}</p></div>
+    <div class="card"><b>AI Capabilities</b><p style="font-size:12.5px;color:var(--sub)">${r[6]}</p></div>
+    </div></div>`).join('');
+  sel.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    sel.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    panels.querySelectorAll('.role-panel').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    panels.querySelector(`.role-panel[data-i="${b.dataset.i}"]`).classList.add('active');
+  });
+}
+/* Matrix */
+function buildMatrix(){
+  const t=document.getElementById('matrixTable');
+  if(!t||t.dataset.built)return; t.dataset.built='1';
+  const roles=["CEO","Sales Mgr","Finance Mgr","HR Mgr","Ops Mgr","Technician","AI System"];
+  const cols=["View","Create","Update","Approve","Execute"];
+  const perm={"CEO":[1,1,1,1,1],"Sales Mgr":[1,1,1,0,1],"Finance Mgr":[1,1,1,1,0],"HR Mgr":[1,1,1,0,0],"Ops Mgr":[1,1,1,0,1],"Technician":[1,0,1,0,0],"AI System":[1,1,0,0,1]};
+  t.innerHTML=`<tr><th>Role</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>`+
+    roles.map(r=>`<tr><td>${r}</td>${perm[r].map(v=>`<td>${v?'<span class="dot"></span>':'—'}</td>`).join('')}</tr>`).join('');
+}
+/* Arch */
+function buildArch(){
+  const box=document.getElementById('archBox');
+  if(!box||box.dataset.wired)return; box.dataset.wired='1';
+  box.addEventListener('click',e=>{
+    const s=e.target.closest('span[data-k]'); if(!s)return;
+    const d=document.getElementById('archdesc');
+    d.textContent=ARCH_DESC[s.dataset.k]||'';
+    d.classList.add('show');
+  });
+}
+/* AI demo */
+function buildAI(){
+  document.querySelectorAll('.ai-demo .q').forEach(q=>{
+    if(q.dataset.wired)return; q.dataset.wired='1';
+    q.addEventListener('click',()=>{
+      const i=q.dataset.i, set=q.dataset.set;
+      const ans=document.getElementById(set==='exec'?'execAns':'smAns');
+      if(ans){ans.textContent=AI_QA[i][1]; ans.classList.add('show');}
+    });
+  });
+}
+
+/* ---------------- SEARCH / FILTER ---------------- */
+document.getElementById('navSearch').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  document.querySelectorAll('#nav li').forEach(li=>{
+    const txt=li.textContent.toLowerCase();
+    li.classList.toggle('hidden', q && !txt.includes(q));
+  });
+});
+const gs=document.getElementById('globalSearch');
+gs.addEventListener('input',()=>{
+  const q=gs.value.trim().toLowerCase();
+  // Build every section so search can scan them
+  SECTIONS.forEach(s=>{const p=document.getElementById('page-'+s.id); if(!p.dataset.built){p.innerHTML=s.render();p.dataset.built='1';}});
+  if(!q){ updateCounter(); document.querySelectorAll('.no-results').forEach(n=>n.remove()); document.querySelectorAll('.page').forEach(p=>p.style.display=''); return; }
+  let total=0, matchSections=0;
+  document.querySelectorAll('.page').forEach(p=>{
+    let found=0;
+    p.querySelectorAll('.req, .card').forEach(el=>{
+      const show=el.textContent.toLowerCase().includes(q);
+      el.style.display= show?'':'none';
+      if(show)found++;
+    });
+    total+=found;
+    if(found>0)matchSections++;
+  });
+  document.getElementById('counter').textContent=`${total} matches across ${matchSections} sections`;
+});
+function updateCounter(){
+  const allReqs=Object.values(R).reduce((a,b)=>a+b.length,0)+Object.values(NFR).reduce((a,b)=>a+b.length,0)+BR.length;
+  document.getElementById('counter').textContent=`${allReqs} requirements documented`;
+  document.querySelectorAll('.req, .card').forEach(el=>el.style.display='');
+}
+
+/* ---------------- MISC UI ---------------- */
+document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+window.addEventListener('scroll',()=>{document.getElementById('toTop').style.display=window.scrollY>400?'block':'none';});
+document.getElementById('toTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+/* INIT */
+showSection('overview');
+updateCounter();
+</script>
+</body>
+</html>
